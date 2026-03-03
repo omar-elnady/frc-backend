@@ -22,8 +22,9 @@ jobs:
             set -e
             cd /root/frc-backend
 
-            # Pull latest code
-            git pull origin main
+            # Pull latest code (handles force pushes cleanly)
+            git fetch origin main
+            git reset --hard origin/main
 
             # Build & start all services (uses .env.production on the server)
             docker compose --env-file .env.production up -d --build
