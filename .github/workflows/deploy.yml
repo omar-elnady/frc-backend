@@ -16,9 +16,17 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASSWORD }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 15m
           script: |
+            set -e
             cd /root/frc-backend
+
+            # Pull latest code
             git pull origin main
-            docker compose up -d --build
+
+            # Build & start all services (uses .env.production on the server)
+            docker compose --env-file .env.production up -d --build
+
+            # Cleanup old dangling images to free disk space
             docker image prune -f

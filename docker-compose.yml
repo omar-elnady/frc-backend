@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-frc}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -96,7 +96,7 @@ services:
     env_file:
       - .env.production
     ports:
-      - "${PORT:-3000}:3000"
+      - "${HOST_PORT:-3000}:${PORT:-3000}"
     depends_on:
       postgres:
         condition: service_healthy

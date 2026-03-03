@@ -1,5 +1,5 @@
-# node_modules copied from host - do not ignore
-# dist is pre-built and must be included
+node_modules
+dist
 .git
 .gitignore
 *.md
