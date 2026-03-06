@@ -57,12 +57,12 @@ services:
   # ==========================================
   frc-community-backend:
     build:
-      context: .
+      context: ./fashion-community-backend
       dockerfile: Dockerfile
     container_name: fashion_community_backend
     restart: unless-stopped
     env_file:
-      - .env.production
+      - ./fashion-community-backend/.env.production
     depends_on:
       - postgres
       - redis
@@ -75,14 +75,14 @@ services:
 
   fashion-community-frontend:
     build:
-      context: ../fashion-community-frontend
+      context: ./fashion-community-frontend
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=https://api.fashionretailclub.com
     container_name: fashion_community_frontend
     restart: unless-stopped
     env_file:
-      - ../fashion-community-frontend/.env.production
+      - ./fashion-community-frontend/.env.production
     depends_on:
       - frc-community-backend
     ports:

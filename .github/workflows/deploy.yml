@@ -26,11 +26,13 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Build & restart using the compose file from the project
-            docker compose -f docker-compose.yml up -d --build frc-community-backend
+            # Move compose file to parent directory and build/restart the backend
+            cp docker-compose.yml ../docker-compose.yml
+            cd /var/www/frc-fashion
+            docker compose up -d --build frc-community-backend
 
             # Run DB migrations
-            docker compose -f docker-compose.yml exec -T frc-community-backend \
+            docker compose exec -T frc-community-backend \
               node_modules/.bin/prisma migrate deploy
 
             # Cleanup
