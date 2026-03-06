@@ -55,14 +55,14 @@ services:
   # ==========================================
   # 2. Fashion Community App (Backend) - (Frontend)
   # ==========================================
-  fashion-community-backend:
+  frc-community-backend:
     build:
-      context: ./fashion-community-backend
+      context: .
       dockerfile: Dockerfile
     container_name: fashion_community_backend
     restart: unless-stopped
     env_file:
-      - ./fashion-community-backend/.env.production
+      - .env.production
     depends_on:
       - postgres
       - redis
@@ -84,7 +84,7 @@ services:
     env_file:
       - ./fashion-community-frontend/.env.production
     depends_on:
-      - fashion-community-backend
+      - frc-community-backend
     ports:
       - "3000:3000"
     environment:
