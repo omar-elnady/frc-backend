@@ -7,13 +7,13 @@ export class VerifyActivationDto {
   email: string;
 
   @ApiProperty({
-    example: '1234',
-    description: '4-digit activation code',
-    pattern: '^[0-9]{4}$',
+    example: '123456',
+    description: '6-digit activation code',
+    pattern: '^[0-9]{6}$',
   })
   @IsString()
-  @Matches(/^[0-9]{4}$/, {
-    message: 'Activation code must be a 4-digit number',
+  @Matches(/^[0-9]{6}$/, {
+    message: 'Activation code must be a 6-digit number',
   })
   activationCode: string;
 }

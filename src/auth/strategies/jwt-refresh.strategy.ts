@@ -15,7 +15,6 @@ const buildFrcExtractor =
 
 export interface RefreshTokenPayload {
   id: string;
-  role: string;
   username: string;
 }
 
@@ -37,6 +36,6 @@ export class JwtRefreshStrategy extends PassportStrategy(
     if (!payload?.id) {
       throw new UnauthorizedException('Invalid refresh token');
     }
-    return { id: payload.id, role: payload.role, username: payload.username };
+    return { id: payload.id, username: payload.username };
   }
 }

@@ -17,7 +17,6 @@ export interface JwtPayload {
   id: string;
   email: string;
   username: string;
-  role: string;
   firstName: string;
   lastName: string;
 }
@@ -42,7 +41,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       id: payload.id,
       email: payload.email,
       username: payload.username,
-      role: payload.role,
       firstName: payload.firstName,
       lastName: payload.lastName,
     };

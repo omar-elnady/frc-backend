@@ -1,123 +1,123 @@
 services:
 
-  # ─── PostgreSQL ──────────────────────────────────────────────────────────────
+  # ==========================================
+  # 1. Databases & Shared Infrastructure
+  # ==========================================
   postgres:
     image: postgres:16-alpine
-    container_name: frc_postgres
+    container_name: shared_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-frc}
-    ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: frc_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - frc_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
-  # ─── Redis ───────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: frc_redis
+    container_name: shared_redis
     restart: unless-stopped
     command: redis-server --appendonly yes
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:
       - frc_network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
-  # ─── Neo4j ───────────────────────────────────────────────────────────────────
   neo4j:
     image: neo4j:5-community
-    container_name: frc_neo4j
+    container_name: shared_neo4j
     restart: unless-stopped
     environment:
-      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-changeme}
-      NEO4J_PLUGINS: '["apoc"]'
-      NEO4J_dbms_security_procedures_unrestricted: apoc.*
-    ports:
-      - "7474:7474"   # Browser UI
-      - "7687:7687"   # Bolt protocol
+      NEO4J_AUTH: neo4j/12345678
     volumes:
       - neo4j_data:/data
-      - neo4j_logs:/logs
     networks:
       - frc_network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7474"]
-      interval: 20s
-      timeout: 15s
-      retries: 10
-      start_period: 60s
 
-  # ─── Elasticsearch ───────────────────────────────────────────────────────────
   elasticsearch:
     image: elasticsearch:8.13.0
-    container_name: frc_elasticsearch
+    container_name: shared_elasticsearch
     restart: unless-stopped
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
       - cluster.routing.allocation.disk.threshold_enabled=false
-    ports:
-      - "${ELASTICSEARCH_PORT:-9200}:9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
       - frc_network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 20s
-      timeout: 15s
-      retries: 10
-      start_period: 60s
 
-  # ─── NestJS App ──────────────────────────────────────────────────────────────
-  app:
+
+  # ==========================================
+  # 2. Fashion Community App (Backend) - (Frontend)
+  # ==========================================
+  fashion-community-backend:
     build:
-      context: .
+      context: ./fashion-community-backend
       dockerfile: Dockerfile
-    container_name: frc_app
+    container_name: fashion_community_backend
     restart: unless-stopped
     env_file:
-      - .env.production
-    ports:
-      - "${HOST_PORT:-3000}:${PORT:-3000}"
+      - ./fashion-community-backend/.env.production
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
+      - postgres
+      - redis
+      - neo4j
+      - elasticsearch
+    ports:
+      - "4000:3000" 
     networks:
       - frc_network
 
-# ─── Volumes ─────────────────────────────────────────────────────────────────
+  fashion-community-frontend:
+    build:
+      context: ./fashion-community-frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=https://api.fashionretailclub.com
+    container_name: fashion_community_frontend
+    restart: unless-stopped
+    env_file:
+      - ./fashion-community-frontend/.env.production
+    depends_on:
+      - fashion-community-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    networks:
+      - frc_network
+
+
+  # ==========================================
+  # 3. Future Apps (LMS, Events) 
+  # ==========================================
+  # fashion-lms-backend:
+  #   ...
+  # fashion-events-frontend:
+  #   ...
+
+
 volumes:
   postgres_data:
   redis_data:
   neo4j_data:
-  neo4j_logs:
   elasticsearch_data:
 
-# ─── Networks ────────────────────────────────────────────────────────────────
 networks:
   frc_network:
     driver: bridge
+
+
+
+
+
+
+
+
+

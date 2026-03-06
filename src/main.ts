@@ -8,6 +8,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
+
+  // Apply global API prefix to all endpoints
+  const apiPrefix = process.env.API_PREFIX;
+  if (apiPrefix) {
+    app.setGlobalPrefix(apiPrefix);
+  }
+
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   // ─── Global Validation Pipe ──────────────────────────────────────────────────

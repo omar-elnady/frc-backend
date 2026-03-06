@@ -48,10 +48,11 @@ export class AuthService {
   async register(dto: RegisterDto) {
     const { fullName, email, password } = dto;
 
-    // Split fullName into firstName and lastName
+    // Extract first and strictly last name (e.g. "Ahmed Aly Gad" -> First: "Ahmed", Last: "Gad")
     const nameParts = fullName.trim().split(/\s+/);
     const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ') || '';
+    const lastName =
+      nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
 
     const existingUser = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -60,7 +61,7 @@ export class AuthService {
       throw new ConflictException('Email is Already Exist');
     }
 
-    const nanoId = customAlphabet('123456789', 4);
+    const nanoId = customAlphabet('123456789', 6);
     const activationCode = nanoId();
     const activationCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
@@ -135,13 +136,47 @@ export class AuthService {
       throw new BadRequestException('Invalid Activation Code');
     }
 
+    const accessSecret = this.configService.get<string>('JWT_SECRET');
+    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+
+    const access_token = this.jwtService.sign(
+      {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      { secret: accessSecret, expiresIn: '1d' },
+    );
+
+    const refresh_token = this.jwtService.sign(
+      { id: user.id, username: user.username },
+      { secret: refreshSecret, expiresIn: '7d' },
+    );
+
+    // Save refresh token in sessions table
+    await this.prisma.session.create({
+      data: {
+        userId: user.id,
+        refreshToken: refresh_token,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { isEmailVerified: true, mfaSecret: null },
+      data: {
+        isEmailVerified: true,
+        mfaSecret: null,
+        lastLoginAt: new Date(),
+      },
     });
 
     return {
-      message: 'Account Activated Successfully. You can now login.',
+      message: 'Account Activated Successfully',
+      access_token,
+      refresh_token,
     };
   }
 
@@ -184,7 +219,7 @@ export class AuthService {
       return { message: 'Account already verified' };
     }
 
-    const nanoId = customAlphabet('123456789', 4);
+    const nanoId = customAlphabet('123456789', 6);
     const activationCode = nanoId();
     const activationCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     const activationCodeHash = await bcrypt.hash(
@@ -253,7 +288,6 @@ export class AuthService {
     const access_token = this.jwtService.sign(
       {
         id: user.id,
-        role: user.role,
         username: user.username,
         email: user.email,
         firstName: user.firstName,
@@ -263,7 +297,7 @@ export class AuthService {
     );
 
     const refresh_token = this.jwtService.sign(
-      { id: user.id, role: user.role, username: user.username },
+      { id: user.id, username: user.username },
       { secret: refreshSecret, expiresIn: '7d' },
     );
 
@@ -508,7 +542,6 @@ export class AuthService {
     const access_token = this.jwtService.sign(
       {
         id: user.id,
-        role: user.role,
         username: user.username,
         email: user.email,
         firstName: user.firstName,
@@ -519,7 +552,7 @@ export class AuthService {
 
     // Rotate refresh token — invalidate old, issue new
     const refresh_token = this.jwtService.sign(
-      { id: user.id, role: user.role, username: user.username },
+      { id: user.id, username: user.username },
       { secret: refreshSecret, expiresIn: '7d' },
     );
 

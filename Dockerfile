@@ -13,7 +13,9 @@ COPY package.json pnpm-lock.yaml ./
 # Create a Linux-compatible .npmrc (ignore platform restrictions during install)
 RUN echo "os=linux" > .npmrc && \
     echo "cpu=x64,arm64" >> .npmrc && \
-    echo "libc=musl,glibc" >> .npmrc
+    echo "libc=musl,glibc" >> .npmrc && \
+    echo "fetch-timeout=600000" >> .npmrc && \
+    echo "fetch-retries=5" >> .npmrc
 
 # Install all dependencies (including devDependencies for build)
 RUN pnpm install --no-frozen-lockfile

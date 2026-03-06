@@ -1,80 +1,82 @@
 model User {
-  id                String          @id @default(cuid())
-  email             String          @unique
-  passwordHash      String?
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String?
 
-  role              UserRole        @default(INDIVIDUAL)
-  status            UserStatus      @default(ACTIVE)
-  isEmailVerified   Boolean         @default(false)
+  role            UserRole   @default(INDIVIDUAL)
+  status          UserStatus @default(ACTIVE)
+  isEmailVerified Boolean    @default(false)
 
-  username          String          @unique
-  firstName         String
-  lastName          String
-  bio               String?
-  avatarUrl         String?
-  coverPhotoUrl     String?
-  dateOfBirth       DateTime?
+  username      String    @unique
+  firstName     String
+  lastName      String
+  bio           String?
+  avatarUrl     String?
+  coverPhotoUrl String?
+  dateOfBirth   DateTime?
 
-  country           String?
-  city              String?
+  country String?
+  city    String?
 
-  yearsOfExp        Int?
-  educationLevel    EducationLevel?
-  currentJobTitle   String?
-  cvUrl             String?
-  cvUpdatedAt       DateTime?
+  yearsOfExp      Int?
+  educationLevel  EducationLevel?
+  currentJobTitle String?
+  cvUrl           String?
+  cvUpdatedAt     DateTime?
 
-  profileFrame      ProfileFrame    @default(NONE)
-  profileStars      Int             @default(0)
+  profileFrame ProfileFrame @default(NONE)
+  profileStars Int          @default(0)
 
-  isOpenToWork      Boolean         @default(false)
-  isOpenToHire      Boolean         @default(false)
+  isOpenToWork Boolean @default(false)
+  isOpenToHire Boolean @default(false)
 
-  locale            String          @default("en")
-  currency          String          @default("USD")
-  theme             String          @default("light")
-  emailNotif        Boolean         @default(true)
-  pushNotif         Boolean         @default(true)
-  profileVisibility Visibility      @default(PUBLIC)
+  locale            String     @default("en")
+  currency          String     @default("USD")
+  theme             String     @default("light")
+  emailNotif        Boolean    @default(true)
+  pushNotif         Boolean    @default(true)
+  profileVisibility Visibility @default(PUBLIC)
 
-  mfaEnabled        Boolean         @default(false)
-  mfaSecret         String?
-  lastLoginAt       DateTime?
-  failedAttempts    Int             @default(0)
-  lockedUntil       DateTime?
+  mfaEnabled     Boolean   @default(false)
+  mfaSecret      String?
+  lastLoginAt    DateTime?
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
 
-  plan              PlanType        @default(FREE)
-  planExpiresAt     DateTime?
+  plan          PlanType  @default(FREE)
+  planExpiresAt DateTime?
 
-  isBanned          Boolean         @default(false)
-  banReason         String?
+  isBanned  Boolean @default(false)
+  banReason String?
 
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  deletedAt         DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  oauthAccounts     OAuthAccount[]
-  sessions          Session[]
-  devices           UserDevice[]
+  oauthAccounts OAuthAccount[]
+  sessions      Session[]
+  devices       UserDevice[]
 
   @@index([country, city])
   @@index([deletedAt])
   @@map("users")
 }
 
+// Exmaple view in db
+// City - Country Sperated Tables
 model OAuthAccount {
-  id            String        @id @default(cuid())
-  provider      OAuthProvider
-  providerId    String
-  accessToken   String?
-  refreshToken  String?
-  expiresAt     DateTime?
+  id           String        @id @default(cuid())
+  provider     OAuthProvider
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
 
-  userId        String
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([provider, providerId])
   @@index([userId])
@@ -82,17 +84,17 @@ model OAuthAccount {
 }
 
 model Session {
-  id            String    @id @default(cuid())
-  refreshToken  String    @unique
-  userAgent     String?
-  ip            String?
-  isValid       Boolean   @default(true)
-  expiresAt     DateTime
+  id           String   @id @default(cuid())
+  refreshToken String   @unique
+  userAgent    String?
+  ip           String?
+  isValid      Boolean  @default(true)
+  expiresAt    DateTime
 
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([refreshToken])
@@ -100,17 +102,17 @@ model Session {
 }
 
 model UserDevice {
-  id          String    @id @default(cuid())
-  fcmToken    String
-  platform    String
-  deviceName  String?
-  isActive    Boolean   @default(true)
+  id         String  @id @default(cuid())
+  fcmToken   String
+  platform   String
+  deviceName String?
+  isActive   Boolean @default(true)
 
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, fcmToken])
   @@index([userId])
