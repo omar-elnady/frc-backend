@@ -26,10 +26,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ): Promise<any> {
     const { name, emails, photos } = profile;
     const user = {
-      email: emails[0].value,
-      firstName: name.givenName,
-      lastName: name.familyName,
-      picture: photos[0].value,
+      email: emails?.[0]?.value || '',
+      firstName: name?.givenName || 'Google',
+      lastName: name?.familyName || 'User',
+      picture: photos?.[0]?.value || '',
       accessToken,
       refreshToken,
     };

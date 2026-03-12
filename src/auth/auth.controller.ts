@@ -181,26 +181,41 @@ export class AuthController {
       'Google redirects here after login. Do not call this manually.',
   })
   async googleAuthRedirect(@Req() req: any, @Res() res: any) {
-    const result = await this.authService.googleLogin(req);
-    // Use the dynamic state sent through URL query 'redirectUrl', or fallback to a default slash
     const redirectBaseUrl = (req.query.state as string) || '/';
-    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
-
-    // Set configuration for cross-subdomain cookies
-    const cookieOptions = {
-      domain: isProd ? '.fashionretailclub.com' : undefined, // Works across subdomains (dev. & api.)
-      httpOnly: false, // Must be false so frontend JS can read it and save it to LocalStorage
-      secure: isProd, // True on production because of HTTPS
-      sameSite: isProd ? 'lax' : 'lax',
-      path: '/',
-      maxAge: 60 * 1000, // 60 seconds is enough for frontend to capture the tokens
-    };
-
-    res.cookie('access_token', result.access_token, cookieOptions);
-    res.cookie('refresh_token', result.refresh_token, cookieOptions);
-
-    // Redirect cleanly without any URL parameters
-    return res.redirect(redirectBaseUrl);
+    
+    try {
+      if (!req.user) {
+        throw new Error('No user from Google');
+      }
+      
+      const result = await this.authService.googleLogin(req);
+      const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+      const host = req.headers.host || '';
+      
+      // If we are on any fashionretailclub domain (e.g. dev., api., www.), share the cookie
+      const isFRCRoot = host.includes('fashionretailclub.com');
+      const cookieDomain = isFRCRoot ? '.fashionretailclub.com' : undefined;
+  
+      // Set configuration for cross-subdomain cookies
+      const cookieOptions = {
+        domain: cookieDomain,
+        httpOnly: false, // Must be false so frontend JS can read it and save it to LocalStorage
+        secure: isProd || isFRCRoot, // True on production or HTTPS domains
+        sameSite: 'lax' as const,
+        path: '/',
+        maxAge: 60 * 1000, // 60 seconds is enough for frontend to capture the tokens
+      };
+  
+      res.cookie('access_token', result.access_token, cookieOptions);
+      res.cookie('refresh_token', result.refresh_token, cookieOptions);
+  
+      // Redirect cleanly without any URL parameters
+      return res.redirect(redirectBaseUrl);
+    } catch (error) {
+      console.error('Google Auth Error:', error);
+      const separator = redirectBaseUrl.includes('?') ? '&' : '?';
+      return res.redirect(`${redirectBaseUrl}${separator}error=oauth_failed`);
+    }
   }
 
   // ─── LinkedIn Login ──────────────────────────────────────────────────────────
@@ -230,25 +245,39 @@ export class AuthController {
       'LinkedIn redirects here after login. Do not call this manually.',
   })
   async linkedinAuthRedirect(@Req() req: any, @Res() res: any) {
-    const result = await this.authService.linkedinLogin(req);
-    // Use the dynamic state sent through URL query 'redirectUrl', or fallback to a default slash
     const redirectBaseUrl = (req.query.state as string) || '/';
-    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    
+    try {
+      if (!req.user) {
+        throw new Error('No user from LinkedIn');
+      }
 
-    // Set configuration for cross-subdomain cookies
-    const cookieOptions = {
-      domain: isProd ? '.fashionretailclub.com' : undefined,
-      httpOnly: false,
-      secure: isProd,
-      sameSite: isProd ? 'lax' : 'lax',
-      path: '/',
-      maxAge: 60 * 1000, // 60 seconds
-    };
-
-    res.cookie('access_token', result.access_token, cookieOptions);
-    res.cookie('refresh_token', result.refresh_token, cookieOptions);
-
-    // Redirect cleanly without any URL parameters
-    return res.redirect(redirectBaseUrl);
+      const result = await this.authService.linkedinLogin(req);
+      const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+      const host = req.headers.host || '';
+      
+      const isFRCRoot = host.includes('fashionretailclub.com');
+      const cookieDomain = isFRCRoot ? '.fashionretailclub.com' : undefined;
+  
+      // Set configuration for cross-subdomain cookies
+      const cookieOptions = {
+        domain: cookieDomain,
+        httpOnly: false,
+        secure: isProd || isFRCRoot,
+        sameSite: 'lax' as const,
+        path: '/',
+        maxAge: 60 * 1000, // 60 seconds
+      };
+  
+      res.cookie('access_token', result.access_token, cookieOptions);
+      res.cookie('refresh_token', result.refresh_token, cookieOptions);
+  
+      // Redirect cleanly without any URL parameters
+      return res.redirect(redirectBaseUrl);
+    } catch (error) {
+      console.error('LinkedIn Auth Error:', error);
+      const separator = redirectBaseUrl.includes('?') ? '&' : '?';
+      return res.redirect(`${redirectBaseUrl}${separator}error=oauth_failed`);
+    }
   }
 }
