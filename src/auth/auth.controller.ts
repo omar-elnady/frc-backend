@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard, JwtRefreshAuthGuard } from './guards/jwt-auth.guard';
+import { GoogleOAuthGuard, LinkedInOAuthGuard } from './guards/oauth.guard';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -155,16 +156,17 @@ export class AuthController {
 
   // ─── Google Login ────────────────────────────────────────────────────────────
   @Get('google')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleOAuthGuard)
   @ApiOperation({
     summary: 'Initiate Google Login',
     description: `
 **FRONTEND INSTRUCTIONS:**
 1. Do **NOT** use Axios or Fetch to call this endpoint.
-2. Use a direct browser redirect, e.g., \`<a href="API_URL/api/v1/auth/google">Login with Google</a>\` or \`window.location.href = '...'\`.
-3. After the user logs in, the backend will redirect back to the frontend domain (e.g., \`https://dev.fashionretailclub.com\`).
+2. Use a direct browser redirect and pass the \`redirectUrl\` query parameter indicating where the user should be redirected after login.
+   - Example: \`<a href="API_URL/api/v1/auth/google?redirectUrl=https://your-frontend.com/dashboard">Login with Google</a>\`
+3. After successful login, the backend will redirect the user to the \`redirectUrl\` you provided.
 4. The backend sets **cross-subdomain Cookies** named \`access_token\` and \`refresh_token\`. They are valid for **60 seconds** and have \`httpOnly: false\`.
-5. The frontend should instantly read these cookies via \`document.cookie\`, save them to \`localStorage\`, and then act as if the user just logged in.
+5. The frontend should instantly read these cookies via \`document.cookie\` or a cookie parsing library, save them to \`localStorage\`, and then act as if the user just logged in.
     `,
   })
   async googleAuth(@Req() req: any) {
@@ -172,7 +174,7 @@ export class AuthController {
   }
 
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleOAuthGuard)
   @ApiOperation({
     summary: 'Google Callback (System Only)',
     description:
@@ -180,10 +182,8 @@ export class AuthController {
   })
   async googleAuthRedirect(@Req() req: any, @Res() res: any) {
     const result = await this.authService.googleLogin(req);
-    const redirectBaseUrl = this.configService.get<string>(
-      'GOOGLE_OAUTH_REDIRECT_URL',
-      'https://dev.fashionretailclub.com',
-    );
+    // Use the dynamic state sent through URL query 'redirectUrl', or fallback to a default slash
+    const redirectBaseUrl = (req.query.state as string) || '/';
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';
 
     // Set configuration for cross-subdomain cookies
@@ -205,16 +205,17 @@ export class AuthController {
 
   // ─── LinkedIn Login ──────────────────────────────────────────────────────────
   @Get('linkedin')
-  @UseGuards(AuthGuard('linkedin'))
+  @UseGuards(LinkedInOAuthGuard)
   @ApiOperation({
     summary: 'Initiate LinkedIn Login',
     description: `
 **FRONTEND INSTRUCTIONS:**
 1. Do **NOT** use Axios or Fetch to call this endpoint.
-2. Use a direct browser redirect, e.g., \`<a href="API_URL/api/v1/auth/linkedin">Login with LinkedIn</a>\` or \`window.location.href = '...'\`.
-3. After the user logs in, the backend will redirect back to the frontend domain (e.g., \`https://dev.fashionretailclub.com\`).
+2. Use a direct browser redirect and pass the \`redirectUrl\` query parameter indicating where the user should be redirected after login.
+   - Example: \`<a href="API_URL/api/v1/auth/linkedin?redirectUrl=https://your-frontend.com/dashboard">Login with LinkedIn</a>\`
+3. After successful login, the backend will redirect the user to the \`redirectUrl\` you provided.
 4. The backend sets **cross-subdomain Cookies** named \`access_token\` and \`refresh_token\`. They are valid for **60 seconds** and have \`httpOnly: false\`.
-5. The frontend should instantly read these cookies via \`document.cookie\`, save them to \`localStorage\`, and then act as if the user just logged in.
+5. The frontend should instantly read these cookies via \`document.cookie\` or a cookie parsing library, save them to \`localStorage\`, and then act as if the user just logged in.
     `,
   })
   async linkedinAuth(@Req() req: any) {
@@ -222,7 +223,7 @@ export class AuthController {
   }
 
   @Get('linkedin/callback')
-  @UseGuards(AuthGuard('linkedin'))
+  @UseGuards(LinkedInOAuthGuard)
   @ApiOperation({
     summary: 'LinkedIn Callback (System Only)',
     description:
@@ -230,10 +231,8 @@ export class AuthController {
   })
   async linkedinAuthRedirect(@Req() req: any, @Res() res: any) {
     const result = await this.authService.linkedinLogin(req);
-    const redirectBaseUrl = this.configService.get<string>(
-      'GOOGLE_OAUTH_REDIRECT_URL', // You can use the same redirect config or make a new one, here we reuse it
-      'https://dev.fashionretailclub.com',
-    );
+    // Use the dynamic state sent through URL query 'redirectUrl', or fallback to a default slash
+    const redirectBaseUrl = (req.query.state as string) || '/';
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';
 
     // Set configuration for cross-subdomain cookies

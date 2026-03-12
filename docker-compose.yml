@@ -102,7 +102,8 @@ services:
       context: ./fashion-community-frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=https://api.fashionretailclub.com
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.fashionretailclub.com/api/v1}
+        NEXT_PUBLIC_TOKEN_PREFIX: ${NEXT_PUBLIC_TOKEN_PREFIX:-FRC-PREFIX-BEARER-TOKEN}
     container_name: fashion_community_frontend
     restart: unless-stopped
     env_file:
