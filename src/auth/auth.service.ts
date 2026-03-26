@@ -269,7 +269,7 @@ export class AuthService {
 
   // ─── Login ───────────────────────────────────────────────────────────────────
   async login(dto: LoginDto) {
-    const { identifier, password } = dto;
+    const { email: identifier, password } = dto; // Extract as identifier internally
 
     // Detect whether identifier is a phone number or email
     const isPhone = identifier.startsWith('+');

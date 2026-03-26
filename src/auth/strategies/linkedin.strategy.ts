@@ -9,7 +9,7 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
     super({
       clientID: configService.get<string>('LINKEDIN_CLIENT_ID') || 'placeholder',
       clientSecret: configService.get<string>('LINKEDIN_CLIENT_SECRET') || 'placeholder',
-      callbackURL: `${(configService.get<string>('APP_URL') || 'http://localhost:3000').replace(/\/$/, '')}/${(configService.get<string>('API_PREFIX') || 'api/v1').replace(/^\//, '')}/auth/linkedin/callback`,
+      callbackURL: `${(configService.get<string>('APP_URL') || 'http://localhost:3000').replace(/\/$/, '')}/${(configService.get<string>('API_PREFIX') || '').replace(/^\//, '')}/auth/linkedin/callback`.replace(/(?<!:)\/\//g, '/'),
       scope: ['openid', 'profile', 'email'],
     });
 

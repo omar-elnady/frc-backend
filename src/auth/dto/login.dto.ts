@@ -3,15 +3,15 @@ import { IsString, IsNotEmpty, Matches } from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({
-    example: 'user@example.com or +201018018272',
-    description: 'Email address OR phone number in E.164 format',
+    example: 'user@example.com or +201234567890',
+    description: 'Email address OR phone number',
   })
   @IsString()
-  @IsNotEmpty({ message: 'identifier is required' })
+  @IsNotEmpty({ message: 'Email or phone number is required' })
   @Matches(/^(\+[1-9]\d{6,14}|[^\s@]+@[^\s@]+\.[^\s@]+)$/, {
-    message: 'identifier must be a valid email or phone number in E.164 format (e.g. +201018018272)',
+    message: 'Invalid email or phone number format',
   })
-  identifier: string;
+  email: string;
 
   @ApiProperty({ example: 'Password123' })
   @IsString()
